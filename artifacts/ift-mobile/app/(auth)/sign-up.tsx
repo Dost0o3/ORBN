@@ -1,7 +1,6 @@
-import { useSignUp, useOAuth } from "@clerk/clerk-expo";
+import { useSignIn, useSignUp } from "@clerk/clerk-expo";
 import { Link } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import * as Linking from "expo-linking";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -16,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { API_BASE } from "@/lib/api-base";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -27,10 +27,18 @@ const SSO_PROVIDERS: { strategy: SsoStrategy; label: string; glyph: string; bg: 
   { strategy: "oauth_x", label: "Continue with X", glyph: "", bg: "#0f0f0f", fg: "#ffffff" },
 ];
 
+const PROVIDER_MAP: Record<SsoStrategy, string> = {
+  oauth_google: "google",
+  oauth_apple: "apple",
+  oauth_github: "github",
+  oauth_x: "x",
+};
+
 export default function SignUpScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { signUp, setActive, isLoaded } = useSignUp();
+  const { signIn, setActive: signInSetActive, isLoaded: signInLoaded } = useSignIn();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -42,33 +50,34 @@ export default function SignUpScreen() {
   const [ssoLoading, setSsoLoading] = useState<SsoStrategy | null>(null);
   const [error, setError] = useState("");
 
-  const { startOAuthFlow: startGoogleFlow } = useOAuth({ strategy: "oauth_google" });
-  const { startOAuthFlow: startAppleFlow } = useOAuth({ strategy: "oauth_apple" });
-  const { startOAuthFlow: startGithubFlow } = useOAuth({ strategy: "oauth_github" });
-  const { startOAuthFlow: startXFlow } = useOAuth({ strategy: "oauth_x" });
-
-  const flowForStrategy = (s: SsoStrategy) => {
-    switch (s) {
-      case "oauth_google": return startGoogleFlow;
-      case "oauth_apple": return startAppleFlow;
-      case "oauth_github": return startGithubFlow;
-      case "oauth_x": return startXFlow;
-    }
-  };
-
   const handleSsoSignUp = async (strategy: SsoStrategy) => {
-    if (ssoLoading || loading) return;
+    if (!isLoaded || !signInLoaded || ssoLoading || loading) return;
+    setSsoLoading(strategy);
+    setError("");
     try {
-      setSsoLoading(strategy);
-      setError("");
+      const provider = PROVIDER_MAP[strategy];
+      const bridgeUrl = `${API_BASE.replace("/api", "")}/mobile-auth?provider=${provider}`;
 
-      const startFlow = flowForStrategy(strategy);
-      const { createdSessionId, setActive: ssoSetActive } = await startFlow({
-        redirectUrl: Linking.createURL("/oauth-native-callback", { scheme: "ift-mobile" }),
-      });
+      const result = await WebBrowser.openAuthSessionAsync(bridgeUrl, "ift-mobile://");
 
-      if (createdSessionId && ssoSetActive) {
-        await ssoSetActive({ session: createdSessionId });
+      if (result.type !== "success") {
+        return;
+      }
+
+      const redirected = new URL(result.url);
+      const ticket = redirected.searchParams.get("token");
+
+      if (!ticket) {
+        setError("Sign-in incomplete. Please try again.");
+        return;
+      }
+
+      const attempt = await signIn!.create({ strategy: "ticket", ticket });
+
+      if (attempt.status === "complete") {
+        await signInSetActive!({ session: attempt.createdSessionId });
+      } else {
+        setError("Sign-in could not be completed. Please try again.");
       }
     } catch (err: unknown) {
       const e = err as { errors?: { message?: string; longMessage?: string; code?: string }[]; message?: string };

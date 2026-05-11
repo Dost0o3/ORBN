@@ -39,6 +39,7 @@ const DocsPage = lazy(() => import("@/pages/docs"));
 const SettingsPage = lazy(() => import("@/pages/settings"));
 const MessagesPage = lazy(() => import("@/pages/messages"));
 const AdminReportsPage = lazy(() => import("@/pages/admin-reports"));
+const MobileAuthPage = lazy(() => import("@/pages/mobile-auth"));
 
 setGhostModeGetter(() => {
   try { return localStorage.getItem("nexusid-ghost-mode") === "true"; } catch { return false; }
@@ -256,6 +257,7 @@ function Router() {
         <Route path="/settings" component={() => <ProtectedRoute component={SettingsPage} />} />
         <Route path="/messages" component={() => <ProtectedRoute component={MessagesPage} />} />
         <Route path="/admin/reports" component={() => <ProtectedRoute component={AdminReportsPage} />} />
+        <Route path="/mobile-auth" component={MobileAuthPage} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
