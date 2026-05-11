@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "-Sm_ekKCqP1in_qtHuANu"
+uri = "file://artifacts/mockup-sandbox/public/images/apple-glass-bg.png"
+type = "image"
+title = "apple glass fluid background"
+
+[[generated]]
+id = "01N1IfxBcflybibBjECwW"
+uri = "file://artifacts/mockup-sandbox/public/images/linear-mesh-bg.png"
+type = "image"
+title = "dark gradient mesh background"
+
+[[generated]]
+id = "Xc5A-RF5-ZkPDaTO8IcKN"
+uri = "file://artifacts/ift-mobile/assets/images/icon.png"
+type = "image"
+title = "ift-id mobile icon"

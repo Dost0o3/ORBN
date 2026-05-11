@@ -1,0 +1,8 @@
+appId: com.iftid.mobile
+name: 01 — Feed (For You)
+---
+- runFlow: 00-sign-in.yaml
+- tapOn: "For You"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: ${OUTPUT_DIR}/01-feed

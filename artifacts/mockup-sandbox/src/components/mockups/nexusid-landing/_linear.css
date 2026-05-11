@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --linear-bg: #0a0a0c;
+  --linear-panel: #121214;
+  --linear-border: #222224;
+  --linear-text-main: #ededef;
+  --linear-text-muted: #8b8b93;
+  --linear-accent: #7b61ff; /* Electric violet */
+  --linear-accent-glow: rgba(123, 97, 255, 0.15);
+}
+
+.linear-theme {
+  background-color: var(--linear-bg);
+  color: var(--linear-text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+.linear-theme * {
+  border-color: var(--linear-border);
+}
+
+.linear-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.linear-glass {
+  background: rgba(18, 18, 20, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--linear-border);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.02);
+}
+
+.linear-button {
+  background: var(--linear-text-main);
+  color: var(--linear-bg);
+  transition: all 0.2s ease;
+}
+
+.linear-button:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+.linear-button-outline {
+  background: transparent;
+  color: var(--linear-text-main);
+  border: 1px solid var(--linear-border);
+  transition: all 0.2s ease;
+}
+
+.linear-button-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #333336;
+}
+
+.linear-glow-text {
+  text-shadow: 0 0 20px var(--linear-accent-glow);
+}
+
+/* Precise animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

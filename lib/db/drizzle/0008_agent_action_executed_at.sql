@@ -1,0 +1,1 @@
+ALTER TABLE "soul_twin_actions" ADD COLUMN "executed_at" timestamp;

@@ -1,0 +1,29 @@
+appId: com.iftid.mobile
+name: 08 — DM with TTL chip
+---
+- runFlow: 00-sign-in.yaml
+- openLink: ift-mobile://messages
+- waitForAnimationToEnd:
+    timeout: 5000
+- extendedWaitUntil:
+    visible:
+      text: "(?i)messages"
+    timeout: 10000
+# The demo account must have a seeded thread named MAESTRO_DEMO_THREAD_NAME
+# whose latest message has a TTL set, so the conversation view shows the
+# self-destruct chip. The tap is REQUIRED — if the thread is missing the
+# flow must fail, otherwise we'd silently capture the conversation list
+# instead of the canonical DM-with-TTL screen.
+- extendedWaitUntil:
+    visible: "${MAESTRO_DEMO_THREAD_NAME}"
+    timeout: 15000
+- tapOn: "${MAESTRO_DEMO_THREAD_NAME}"
+- waitForAnimationToEnd:
+    timeout: 5000
+# Assert the TTL chip is on screen before capturing. The chip renders one of
+# the labels below depending on the thread's selected self-destruct interval.
+- extendedWaitUntil:
+    visible:
+      text: "(?i)(self-destruct|disappears|1m|1h|24h|TTL)"
+    timeout: 10000
+- takeScreenshot: ${OUTPUT_DIR}/08-dm-ttl

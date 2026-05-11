@@ -1,0 +1,11 @@
+appId: com.iftid.mobile
+name: 03 — Soul Twin chat
+---
+- runFlow: 00-sign-in.yaml
+- openLink: ift-mobile://soul-twin
+- waitForAnimationToEnd:
+    timeout: 5000
+- extendedWaitUntil:
+    visible: "Soul Twin"
+    timeout: 10000
+- takeScreenshot: ${OUTPUT_DIR}/03-soul-twin

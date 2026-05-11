@@ -1,0 +1,3319 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: NexusID API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: users
+    description: User profile operations
+  - name: posts
+    description: Feed post operations
+  - name: feed
+    description: Home feed and discovery
+  - name: jobs
+    description: Job board operations
+  - name: communities
+    description: DAO/Community operations
+  - name: notifications
+    description: Notification operations
+  - name: ai
+    description: AI feature operations
+  - name: openai
+    description: OpenAI chat integration
+  - name: bounties
+    description: Bounty board operations
+  - name: circles
+    description: Inner Circle private rooms
+  - name: leaderboard
+    description: Dark Horse leaderboard
+  - name: directMessages
+    description: Direct messages between users
+  - name: moderation
+    description: Blocking and reporting users
+  - name: chat
+    description: Chat / DM side-channels (screenshot detection, etc.)
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Users ───────────────────────────────────────────────────────────────────
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: Not found
+    put:
+      operationId: updateMe
+      tags: [users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /users/by-username/{username}:
+    get:
+      operationId: getUserByUsername
+      tags: [users]
+      summary: Get a user profile by username (used by /u/:username permanent links and QR codes)
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: Not found
+
+  /users/{userId}:
+    get:
+      operationId: getUserById
+      tags: [users]
+      summary: Get a user profile by ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: Not found
+
+  /users/search:
+    get:
+      operationId: searchUsers
+      tags: [users]
+      summary: Search users
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: skill
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSearchResult"
+
+  /users/{userId}/follow:
+    post:
+      operationId: followUser
+      tags: [users]
+      summary: Follow a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowResult"
+
+    delete:
+      operationId: unfollowUser
+      tags: [users]
+      summary: Unfollow a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowResult"
+
+  /users/{userId}/followers:
+    get:
+      operationId: getUserFollowers
+      tags: [users]
+      summary: Get followers of a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of followers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersList"
+
+  /users/{userId}/following:
+    get:
+      operationId: getUserFollowing
+      tags: [users]
+      summary: Get users that a user is following
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of following
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersList"
+
+  /users/{userId}/posts:
+    get:
+      operationId: getUserPosts
+      tags: [users]
+      summary: Get posts by a specific user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: User posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsPage"
+
+  /users/stats:
+    get:
+      operationId: getUserStats
+      tags: [users]
+      summary: Get stats for current user (followers, following, posts, likes received)
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStats"
+
+  /users/{userId}/stats:
+    get:
+      operationId: getUserStatsByUserId
+      tags: [users]
+      summary: Get public stats for any user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStats"
+
+  # ─── Posts ───────────────────────────────────────────────────────────────────
+  /posts:
+    get:
+      operationId: listPosts
+      tags: [posts]
+      summary: List posts (feed)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: mood
+          in: query
+          schema:
+            type: string
+            enum: [motivational, professional, collaborative, creative, all]
+      responses:
+        "200":
+          description: Posts page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsPage"
+
+    post:
+      operationId: createPost
+      tags: [posts]
+      summary: Create a new post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePostBody"
+      responses:
+        "201":
+          description: Created post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+
+  /posts/{postId}:
+    get:
+      operationId: getPost
+      tags: [posts]
+      summary: Get a single post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        "404":
+          description: Not found
+
+    delete:
+      operationId: deletePost
+      tags: [posts]
+      summary: Delete a post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+
+  /posts/{postId}/like:
+    post:
+      operationId: likePost
+      tags: [posts]
+      summary: Like a post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Like result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeResult"
+
+    delete:
+      operationId: unlikePost
+      tags: [posts]
+      summary: Unlike a post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Unlike result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeResult"
+
+  /posts/{postId}/comments:
+    get:
+      operationId: getPostComments
+      tags: [posts]
+      summary: Get comments for a post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Comments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentsPage"
+
+    post:
+      operationId: createComment
+      tags: [posts]
+      summary: Comment on a post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentBody"
+      responses:
+        "201":
+          description: Created comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+
+  /posts/{postId}/comments/{commentId}:
+    patch:
+      operationId: updateCommentAnonymity
+      tags: [posts]
+      summary: Toggle the anonymity of one of your own comments
+      description: |
+        Lets the comment's author flip `isAnonymous` after the fact, so an
+        attributed comment can be re-anonymized or an anonymous one revealed.
+        Only the original commenter may call this. The matching `comment`
+        notification on the parent post owner is rewritten in the same
+        transaction so its `actorId` (and message text) stay consistent with
+        the new anonymity state — preventing post owners from de-anonymizing
+        a comment via stale notification metadata.
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommentAnonymityBody"
+      responses:
+        "200":
+          description: Updated comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "403":
+          description: Not the commenter
+        "404":
+          description: Comment not found
+
+  /posts/{postId}/repost:
+    post:
+      operationId: repostPost
+      tags: [posts]
+      summary: Repost a post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Reposted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+
+  # ─── Feed / Discover ─────────────────────────────────────────────────────────
+  /feed/trending:
+    get:
+      operationId: getTrendingPosts
+      tags: [feed]
+      summary: Get trending posts
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Trending posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsPage"
+
+  /feed/suggested-users:
+    get:
+      operationId: getSuggestedUsers
+      tags: [feed]
+      summary: Get suggested users to follow
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: Suggested users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersList"
+
+  /feed/hashtags:
+    get:
+      operationId: getTrendingHashtags
+      tags: [feed]
+      summary: Get trending hashtags
+      responses:
+        "200":
+          description: Trending hashtags
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HashtagsList"
+
+  # ─── Jobs ────────────────────────────────────────────────────────────────────
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List job listings
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [full-time, part-time, contract, remote]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Jobs page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobsPage"
+
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a job listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobBody"
+      responses:
+        "201":
+          description: Created job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{jobId}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a single job listing
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{jobId}/apply:
+    post:
+      operationId: applyToJob
+      tags: [jobs]
+      summary: Apply to a job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobApplicationBody"
+      responses:
+        "201":
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobApplication"
+
+  /jobs/ai-match:
+    get:
+      operationId: getAiJobMatches
+      tags: [jobs]
+      summary: Get AI-matched jobs for current user
+      responses:
+        "200":
+          description: Matched jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobsPage"
+
+  # ─── Communities ─────────────────────────────────────────────────────────────
+  /communities:
+    get:
+      operationId: listCommunities
+      tags: [communities]
+      summary: List communities
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Communities list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunitiesList"
+
+    post:
+      operationId: createCommunity
+      tags: [communities]
+      summary: Create a community
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommunityBody"
+      responses:
+        "201":
+          description: Created community
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Community"
+
+  /communities/{communityId}:
+    get:
+      operationId: getCommunity
+      tags: [communities]
+      summary: Get a community
+      parameters:
+        - name: communityId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Community
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Community"
+
+  /communities/{communityId}/join:
+    post:
+      operationId: joinCommunity
+      tags: [communities]
+      summary: Join a community
+      parameters:
+        - name: communityId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Joined
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinResult"
+
+  # ─── Notifications ───────────────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for current user
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsList"
+
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+
+  /notifications/unread-count:
+    get:
+      operationId: getUnreadNotificationCount
+      tags: [notifications]
+      summary: Get unread notification count
+      responses:
+        "200":
+          description: Count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+
+  # ─── AI Features ─────────────────────────────────────────────────────────────
+  /ai/soul-twin/chat:
+    post:
+      operationId: chatWithSoulTwin
+      tags: [ai]
+      summary: Chat with AI Soul Twin (SSE streaming)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SoulTwinChatBody"
+      responses:
+        "200":
+          description: SSE stream of AI response
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /ai/career-oracle:
+    post:
+      operationId: getCareerOracle
+      tags: [ai]
+      summary: Get AI career roadmap and skill gap analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CareerOracleBody"
+      responses:
+        "200":
+          description: Career insights
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CareerOracleResult"
+
+  /ai/enhance-post:
+    post:
+      operationId: enhancePost
+      tags: [ai]
+      summary: AI-enhance post text, add hashtags, suggest improvements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnhancePostBody"
+      responses:
+        "200":
+          description: Enhanced post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnhancePostResult"
+
+  /ai/mood-detect:
+    post:
+      operationId: detectMood
+      tags: [ai]
+      summary: Detect mood from text for emotion-aware feed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoodDetectBody"
+      responses:
+        "200":
+          description: Detected mood
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MoodDetectResult"
+
+  # ─── OpenAI conversations (Soul Twin persistence) ────────────────────────────
+  /openai/conversations:
+    get:
+      operationId: listConversations
+      tags: [openai]
+      summary: List AI conversations for current user
+      responses:
+        "200":
+          description: Conversations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationsList"
+
+    post:
+      operationId: createConversation
+      tags: [openai]
+      summary: Create a new AI conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConversationBody"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+
+  /openai/conversations/{id}/messages:
+    get:
+      operationId: getConversationMessages
+      tags: [openai]
+      summary: Get messages for a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessagesList"
+
+    post:
+      operationId: sendOpenaiMessage
+      tags: [openai]
+      summary: Send a message and stream AI response
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOpenaiMessageBody"
+      responses:
+        "200":
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  # ─── Power Score ─────────────────────────────────────────────────────────────
+  /users/{userId}/power-score:
+    get:
+      operationId: getPowerScore
+      tags: [users]
+      summary: Get Power Score and breakdown for a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Power score result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PowerScoreResult"
+
+  # ─── Ghost Mode ───────────────────────────────────────────────────────────────
+  /users/me/ghost-mode:
+    put:
+      operationId: setGhostMode
+      tags: [users]
+      summary: Toggle ghost mode for current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GhostModeBody"
+      responses:
+        "200":
+          description: Ghost mode status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GhostModeResult"
+
+  /users/{userId}/ghost-view:
+    post:
+      operationId: recordGhostView
+      tags: [users]
+      summary: Record a profile view (ghost if X-Ghost-Mode header set)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+
+  /users/{userId}/views:
+    get:
+      operationId: getUserViews
+      tags: [users]
+      summary: Get identified and ghost view counts for a user profile
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: View counts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserViewsResult"
+
+  # ─── Bounties ─────────────────────────────────────────────────────────────────
+  /bounties:
+    get:
+      operationId: listBounties
+      tags: [bounties]
+      summary: List bounties
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, claimed, closed]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Bounties list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BountiesList"
+
+    post:
+      operationId: createBounty
+      tags: [bounties]
+      summary: Create a bounty
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBountyBody"
+      responses:
+        "201":
+          description: Created bounty
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bounty"
+
+  /bounties/{bountyId}:
+    get:
+      operationId: getBounty
+      tags: [bounties]
+      summary: Get a single bounty
+      parameters:
+        - name: bountyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bounty
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bounty"
+        "404":
+          description: Not found
+
+    put:
+      operationId: updateBounty
+      tags: [bounties]
+      summary: Update a bounty (poster only, open status only)
+      parameters:
+        - name: bountyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBountyBody"
+      responses:
+        "200":
+          description: Updated bounty
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bounty"
+        "403":
+          description: Unauthorized or bounty not open
+        "404":
+          description: Not found
+
+    delete:
+      operationId: deleteBounty
+      tags: [bounties]
+      summary: Delete a bounty (poster only, open status only)
+      parameters:
+        - name: bountyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+        "403":
+          description: Unauthorized or bounty not open
+        "404":
+          description: Not found
+
+  /bounties/{bountyId}/submissions:
+    get:
+      operationId: getBountySubmissions
+      tags: [bounties]
+      summary: List submissions for a bounty
+      parameters:
+        - name: bountyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submissions list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BountySubmissionsList"
+
+    post:
+      operationId: createBountySubmission
+      tags: [bounties]
+      summary: Submit a solution to a bounty
+      parameters:
+        - name: bountyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBountySubmissionBody"
+      responses:
+        "201":
+          description: Created submission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BountySubmission"
+
+  /bounties/{bountyId}/submissions/{submissionId}/winner:
+    put:
+      operationId: selectBountyWinner
+      tags: [bounties]
+      summary: Mark a submission as winner
+      parameters:
+        - name: bountyId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Winner selected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BountySubmission"
+
+  /bounties/{bountyId}/close:
+    post:
+      operationId: closeBounty
+      tags: [bounties]
+      summary: Close an open bounty (poster only)
+      parameters:
+        - name: bountyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bounty closed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bounty"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  # ─── Inner Circles ────────────────────────────────────────────────────────────
+  /circles:
+    get:
+      operationId: listCircles
+      tags: [circles]
+      summary: List Inner Circles
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Circles list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CirclesList"
+
+    post:
+      operationId: createCircle
+      tags: [circles]
+      summary: Create an Inner Circle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCircleBody"
+      responses:
+        "201":
+          description: Created circle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Circle"
+
+  /circles/{circleId}:
+    get:
+      operationId: getCircle
+      tags: [circles]
+      summary: Get a single Inner Circle
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Circle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Circle"
+
+    put:
+      operationId: updateCircle
+      tags: [circles]
+      summary: Update circle details (DON only)
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCircleBody"
+      responses:
+        "200":
+          description: Updated circle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Circle"
+
+  /circles/{circleId}/request:
+    post:
+      operationId: requestCircleAccess
+      tags: [circles]
+      summary: Request or join an Inner Circle
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Join result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinResult"
+
+  /circles/{circleId}/posts:
+    get:
+      operationId: getCirclePosts
+      tags: [circles]
+      summary: Get posts in an Inner Circle (members only)
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Circle posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CirclePostsList"
+
+    post:
+      operationId: createCirclePost
+      tags: [circles]
+      summary: Post inside an Inner Circle
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCirclePostBody"
+      responses:
+        "201":
+          description: Created post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CirclePost"
+
+  /circles/{circleId}/members:
+    get:
+      operationId: getCircleMembers
+      tags: [circles]
+      summary: Get members of an Inner Circle (members only)
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Circle members with Power Scores
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CircleMembersList"
+        "403":
+          description: Members only
+
+  /circles/{circleId}/invite:
+    post:
+      operationId: inviteCircleMember
+      tags: [circles]
+      summary: Directly invite a user to an Inner Circle (DON only)
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+              required: [userId]
+      responses:
+        "200":
+          description: Invite result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApproveResult"
+        "403":
+          description: DON only or at capacity
+
+  /circles/{circleId}/pending:
+    get:
+      operationId: getCirclePending
+      tags: [circles]
+      summary: Get pending membership requests (DON only)
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Pending requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CirclePendingList"
+        "403":
+          description: DON only
+
+  /circles/{circleId}/members/{userId}/approve:
+    post:
+      operationId: approveCircleMember
+      tags: [circles]
+      summary: Approve a pending circle membership request (DON only)
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Request approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApproveResult"
+        "403":
+          description: DON only
+        "404":
+          description: No pending request
+    delete:
+      operationId: rejectCircleMember
+      tags: [circles]
+      summary: Reject a pending circle membership request (DON only)
+      parameters:
+        - name: circleId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApproveResult"
+        "403":
+          description: DON only
+
+  # ─── Dark Horse Leaderboard ───────────────────────────────────────────────────
+  /leaderboard/dark-horses:
+    get:
+      operationId: getDarkHorses
+      tags: [leaderboard]
+      summary: Get top 10 rising professionals (Dark Horse leaderboard)
+      responses:
+        "200":
+          description: Dark Horse leaderboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DarkHorsesList"
+
+  # ─── Direct Messages ──────────────────────────────────────────────────────────
+  /messages:
+    post:
+      operationId: sendDirectMessage
+      tags: [directMessages]
+      summary: Send a direct message to another user (creates the conversation if needed)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendDirectMessageBody"
+      responses:
+        "201":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectMessage"
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "404":
+          description: Recipient not found
+
+  /messages/typing:
+    post:
+      operationId: sendTypingIndicator
+      tags: [directMessages]
+      summary: Notify a recipient that the current user is typing a message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TypingIndicatorBody"
+      responses:
+        "200":
+          description: Typing event published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+
+  /messages/unread-count:
+    get:
+      operationId: getUnreadDirectMessageCount
+      tags: [directMessages]
+      summary: Get total unread DM count for the current user (sidebar badge)
+      responses:
+        "200":
+          description: Count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+
+  /conversations:
+    get:
+      operationId: listDirectConversations
+      tags: [directMessages]
+      summary: List the current user's direct-message conversations
+      responses:
+        "200":
+          description: Conversations list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectConversationsList"
+
+  /conversations/{conversationId}/messages:
+    get:
+      operationId: getDirectConversationMessages
+      tags: [directMessages]
+      summary: Get messages in a direct-message conversation (and mark them read)
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectMessagesPage"
+        "403":
+          description: Not a participant
+        "404":
+          description: Conversation not found
+
+  # ─── Moderation: blocks & reports ────────────────────────────────────────────
+  /users/{userId}/block:
+    post:
+      operationId: blockUser
+      tags: [moderation]
+      summary: Block a user from sending DMs
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Blocked
+        "400":
+          description: Cannot block yourself
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+    delete:
+      operationId: unblockUser
+      tags: [moderation]
+      summary: Remove an existing block on a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Unblocked
+        "401":
+          description: Unauthorized
+
+  /users/{userId}/report:
+    post:
+      operationId: reportUser
+      tags: [moderation]
+      summary: File a moderation report against a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportUserBody"
+      responses:
+        "201":
+          description: Report filed
+        "400":
+          description: Cannot report yourself
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+
+  /blocks:
+    get:
+      operationId: listMyBlocks
+      tags: [moderation]
+      summary: List user IDs the current user has blocked
+      responses:
+        "200":
+          description: Block list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockedUserIdsList"
+
+  /moderation/reports:
+    get:
+      operationId: listUserReports
+      tags: [moderation]
+      summary: List user reports for moderator review (admin only)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, reviewed, dismissed, actioned, all]
+            default: pending
+      responses:
+        "200":
+          description: Reports list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserReportsList"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Not an admin
+
+  /moderation/reports/{reportId}:
+    patch:
+      operationId: updateUserReportStatus
+      tags: [moderation]
+      summary: Update the status of a user report (admin only)
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserReportBody"
+      responses:
+        "200":
+          description: Updated report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserReport"
+        "400":
+          description: Invalid status
+        "401":
+          description: Unauthorized
+        "403":
+          description: Not an admin
+        "404":
+          description: Report not found
+
+  /moderation/reports/{reportId}/conversation:
+    get:
+      operationId: getUserReportConversation
+      tags: [moderation]
+      summary: Get the conversation snippet attached to a report (admin only)
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Conversation snippet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserReportConversation"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Not an admin
+        "404":
+          description: Report or conversation not found
+
+  /admin/users/{userId}/verification:
+    patch:
+      operationId: setUserVerificationTier
+      tags: [moderation]
+      summary: Grant or revoke an identity-verification badge (admin only)
+      description: |
+        Sets the user's verificationTier to "silver", "blue", or null
+        (revoke). Surfaced as a check-mark badge next to the user's
+        display name throughout the product.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetVerificationTierBody"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          description: Invalid tier
+        "401":
+          description: Unauthorized
+        "403":
+          description: Not an admin
+        "404":
+          description: User not found
+
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [moderation]
+      summary: List users for admin moderation (admin only)
+      description: |
+        Returns matching user profiles for the admin UI. Use `adminOnly=true`
+        to fetch the current admin roster, or `q` to search by username /
+        display name when granting admin to a new user.
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: adminOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Matching users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSearchResult"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Not an admin
+
+  /admin/users/{userId}/admin:
+    patch:
+      operationId: setUserAdmin
+      tags: [moderation]
+      summary: Promote or demote a user to admin/moderator (admin only)
+      description: |
+        Sets the user's `isAdmin` flag. Admins cannot demote themselves —
+        attempting to do so returns 400, which guards against an admin
+        accidentally locking themselves out of the moderation surface.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetUserAdminBody"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          description: Invalid input or self-demotion
+        "401":
+          description: Unauthorized
+        "403":
+          description: Not an admin
+        "404":
+          description: User not found
+
+  # ─── Storage ──────────────────────────────────────────────────────────────────
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      summary: Request a presigned GCS upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestUploadUrlBody"
+      responses:
+        "200":
+          description: Presigned upload URL and object path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestUploadUrlResponse"
+
+  # ─── Chat side-channels ──────────────────────────────────────────────────────
+  /chat/screenshot:
+    post:
+      operationId: reportChatScreenshot
+      tags: [chat]
+      summary: Report that the current user took a screenshot of a DM thread
+      description: |
+        Mobile-only. Notifies the peer of the conversation and increments
+        a public counter on the screenshotter's profile so others can see
+        how often they screenshot DMs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportChatScreenshotBody"
+      responses:
+        "200":
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportChatScreenshotResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Not a participant of this conversation
+        "404":
+          description: Conversation not found
+
+components:
+  schemas:
+    ReportChatScreenshotBody:
+      type: object
+      properties:
+        conversationId:
+          type: integer
+        platform:
+          type: string
+          enum: [ios, android]
+      required: [conversationId]
+
+    ReportChatScreenshotResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        chatScreenshotsTaken:
+          type: integer
+      required: [ok, chatScreenshotsTaken]
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    # ─── User ──────────────────────────────────────────────────────────────────
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        username:
+          type: string
+        displayName:
+          type: string
+        bio:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        coverUrl:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        website:
+          type: string
+          nullable: true
+        occupation:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        skills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: array
+          items:
+            $ref: "#/components/schemas/Experience"
+        didDocument:
+          type: object
+          nullable: true
+          additionalProperties: true
+        followersCount:
+          type: integer
+        followingCount:
+          type: integer
+        postsCount:
+          type: integer
+        ghostMode:
+          type: boolean
+        isFollowing:
+          type: boolean
+        bountiesWon:
+          type: integer
+        createdAt:
+          type: string
+        usernameChangedAt:
+          type: string
+          nullable: true
+        lastSeenAt:
+          type: string
+          nullable: true
+          description: Last time this user pinged the server. Powers the online dot.
+        powerScore:
+          type: ["integer", "null"]
+        powerRank:
+          type: ["string", "null"]
+        isAdmin:
+          type: boolean
+          description: True when this user is a moderator/admin.
+        verificationTier:
+          type: string
+          nullable: true
+          enum: [silver, blue, null]
+          description: |
+            Identity-verification badge shown next to the display name.
+            "silver" = identity verified, "blue" = notable / premium account,
+            null = unverified. Granted by an admin via
+            PATCH /admin/users/:userId/verification.
+        chatScreenshotsTaken:
+          type: integer
+          description: |
+            Public counter of how many times this user has screenshotted a
+            DM thread (mobile only). Surfaced as a warning chip on the
+            profile so peers can decide whether to share sensitive content.
+      required: [id, clerkId, username, displayName, skills, experience, followersCount, followingCount, postsCount, ghostMode, isFollowing, bountiesWon, createdAt]
+
+    SetUserAdminBody:
+      type: object
+      properties:
+        isAdmin:
+          type: boolean
+          description: True to promote the user to admin, false to demote.
+      required: [isAdmin]
+
+    SetVerificationTierBody:
+      type: object
+      properties:
+        tier:
+          type: string
+          nullable: true
+          enum: [silver, blue, null]
+          description: New verification tier. Use null to revoke the badge.
+      required: [tier]
+
+    Experience:
+      type: object
+      properties:
+        title:
+          type: string
+        company:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+          nullable: true
+        current:
+          type: boolean
+        description:
+          type: string
+          nullable: true
+      required: [title, company, startDate, current]
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        bio:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        coverUrl:
+          type: string
+          nullable: true
+        location:
+          type: string
+        website:
+          type: string
+        occupation:
+          type: string
+        gender:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: array
+          items:
+            $ref: "#/components/schemas/Experience"
+
+    UserSearchResult:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserProfile"
+        total:
+          type: integer
+      required: [users, total]
+
+    UsersList:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserProfile"
+      required: [users]
+
+    UserStats:
+      type: object
+      properties:
+        followersCount:
+          type: integer
+        followingCount:
+          type: integer
+        postsCount:
+          type: integer
+        likesReceived:
+          type: integer
+        commentsReceived:
+          type: integer
+        bountiesWon:
+          type: integer
+      required: [followersCount, followingCount, postsCount, likesReceived, commentsReceived, bountiesWon]
+
+    FollowResult:
+      type: object
+      properties:
+        following:
+          type: boolean
+        followersCount:
+          type: integer
+      required: [following, followersCount]
+
+    # ─── Post ──────────────────────────────────────────────────────────────────
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        videoUrl:
+          type: string
+          nullable: true
+        mood:
+          type: string
+          nullable: true
+        hashtags:
+          type: array
+          items:
+            type: string
+        author:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/UserProfile"
+        likesCount:
+          type: integer
+        commentsCount:
+          type: integer
+        repostsCount:
+          type: integer
+        isLiked:
+          type: boolean
+        isRepost:
+          type: boolean
+        isAnonymous:
+          type: boolean
+        originalPost:
+          nullable: true
+          $ref: "#/components/schemas/Post"
+        createdAt:
+          type: string
+      required: [id, content, hashtags, likesCount, commentsCount, repostsCount, isLiked, isRepost, createdAt]
+
+    CreatePostBody:
+      type: object
+      properties:
+        content:
+          type: string
+        imageUrl:
+          type: string
+        videoUrl:
+          type: string
+        mood:
+          type: string
+          enum: [motivational, professional, collaborative, creative]
+        hashtags:
+          type: array
+          items:
+            type: string
+        isAnonymous:
+          type: boolean
+          description: |
+            Per-post anonymity override. When true, the post is stored as
+            anonymous regardless of the author's account-wide Ghost Mode
+            setting. When false, the post is attributed even if Ghost Mode
+            is on. When omitted, the account-wide Ghost Mode setting is
+            used.
+      required: [content]
+
+    PostsPage:
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Post"
+        total:
+          type: integer
+        hasMore:
+          type: boolean
+      required: [posts, total, hasMore]
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        author:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/UserProfile"
+        isAnonymous:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, content, isAnonymous, createdAt]
+
+    CreateCommentBody:
+      type: object
+      properties:
+        content:
+          type: string
+        isAnonymous:
+          type: boolean
+          description: |
+            When true, the comment is stored as anonymous and other viewers
+            (including the parent post's author) see it as "Anonymous". The
+            commenter themselves still sees their own real identity. When
+            omitted or false, the comment is attributed normally; this
+            toggle is independent of the account-wide Ghost Mode setting.
+      required: [content]
+
+    UpdateCommentAnonymityBody:
+      type: object
+      properties:
+        isAnonymous:
+          type: boolean
+          description: |
+            New anonymity state for the comment. Setting this to true
+            re-anonymizes a previously attributed comment; false reveals an
+            anonymous comment back to its real author.
+      required: [isAnonymous]
+
+    CommentsPage:
+      type: object
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Comment"
+        total:
+          type: integer
+      required: [comments, total]
+
+    LikeResult:
+      type: object
+      properties:
+        liked:
+          type: boolean
+        likesCount:
+          type: integer
+      required: [liked, likesCount]
+
+    DeleteResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    HashtagsList:
+      type: object
+      properties:
+        hashtags:
+          type: array
+          items:
+            type: object
+            properties:
+              tag:
+                type: string
+              count:
+                type: integer
+            required: [tag, count]
+      required: [hashtags]
+
+    # ─── Jobs ──────────────────────────────────────────────────────────────────
+    Job:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        company:
+          type: string
+        location:
+          type: string
+        type:
+          type: string
+          enum: [full-time, part-time, contract, remote]
+        description:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        salaryMin:
+          type: integer
+          nullable: true
+        salaryMax:
+          type: integer
+          nullable: true
+        poster:
+          $ref: "#/components/schemas/UserProfile"
+        applicantsCount:
+          type: integer
+        aiMatchScore:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, title, company, location, type, description, skills, poster, applicantsCount, createdAt]
+
+    CreateJobBody:
+      type: object
+      properties:
+        title:
+          type: string
+        company:
+          type: string
+        location:
+          type: string
+        type:
+          type: string
+          enum: [full-time, part-time, contract, remote]
+        description:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        salaryMin:
+          type: integer
+        salaryMax:
+          type: integer
+      required: [title, company, location, type, description, skills]
+
+    JobsPage:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        total:
+          type: integer
+        hasMore:
+          type: boolean
+      required: [jobs, total, hasMore]
+
+    JobApplicationBody:
+      type: object
+      properties:
+        coverLetter:
+          type: string
+      required: [coverLetter]
+
+    JobApplication:
+      type: object
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        userId:
+          type: string
+        coverLetter:
+          type: string
+        status:
+          type: string
+          enum: [pending, reviewing, accepted, rejected]
+        createdAt:
+          type: string
+      required: [id, jobId, userId, coverLetter, status, createdAt]
+
+    # ─── Communities ───────────────────────────────────────────────────────────
+    Community:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        category:
+          type: string
+        membersCount:
+          type: integer
+        isMember:
+          type: boolean
+        creator:
+          $ref: "#/components/schemas/UserProfile"
+        createdAt:
+          type: string
+      required: [id, name, description, category, membersCount, isMember, creator, createdAt]
+
+    CreateCommunityBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        avatarUrl:
+          type: string
+      required: [name, description, category]
+
+    CommunitiesList:
+      type: object
+      properties:
+        communities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Community"
+        total:
+          type: integer
+      required: [communities, total]
+
+    JoinResult:
+      type: object
+      properties:
+        joined:
+          type: boolean
+        membersCount:
+          type: integer
+      required: [joined, membersCount]
+
+    # ─── Notifications ─────────────────────────────────────────────────────────
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum:
+            - like
+            - comment
+            - follow
+            - repost
+            - job_match
+            - mention
+            - match
+            - message
+            - achievement
+            - streak
+            - agent_executed
+            - bounty_submission
+            - bounty_winner
+            - circle_joined
+            - circle_join_request
+            - report_actioned
+            - report_dismissed
+            - chat_screenshot
+        message:
+          type: string
+        read:
+          type: boolean
+        actorId:
+          type: string
+          nullable: true
+        actorName:
+          type: string
+          nullable: true
+        actorAvatar:
+          type: string
+          nullable: true
+        postId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, type, message, read, createdAt]
+
+    NotificationsList:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        unreadCount:
+          type: integer
+      required: [notifications, unreadCount]
+
+    UnreadCount:
+      type: object
+      properties:
+        count:
+          type: integer
+      required: [count]
+
+    # ─── AI ────────────────────────────────────────────────────────────────────
+    SoulTwinChatBody:
+      type: object
+      properties:
+        message:
+          type: string
+        conversationId:
+          type: integer
+          nullable: true
+      required: [message]
+
+    CareerOracleBody:
+      type: object
+      properties:
+        skills:
+          type: array
+          items:
+            type: string
+        targetRole:
+          type: string
+        experience:
+          type: array
+          items:
+            $ref: "#/components/schemas/Experience"
+      required: [skills, targetRole]
+
+    CareerOracleResult:
+      type: object
+      properties:
+        roadmap:
+          type: array
+          items:
+            type: object
+            properties:
+              step:
+                type: integer
+              title:
+                type: string
+              description:
+                type: string
+              timeframe:
+                type: string
+              skills:
+                type: array
+                items:
+                  type: string
+            required: [step, title, description, timeframe, skills]
+        skillGaps:
+          type: array
+          items:
+            type: object
+            properties:
+              skill:
+                type: string
+              priority:
+                type: string
+                enum: [high, medium, low]
+              resources:
+                type: array
+                items:
+                  type: string
+            required: [skill, priority, resources]
+        jobSuggestions:
+          type: array
+          items:
+            type: string
+        marketTrends:
+          type: array
+          items:
+            type: string
+      required: [roadmap, skillGaps, jobSuggestions, marketTrends]
+
+    EnhancePostBody:
+      type: object
+      properties:
+        content:
+          type: string
+        tone:
+          type: string
+          enum: [professional, casual, inspirational]
+      required: [content]
+
+    EnhancePostResult:
+      type: object
+      properties:
+        enhancedContent:
+          type: string
+        hashtags:
+          type: array
+          items:
+            type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+      required: [enhancedContent, hashtags, suggestions]
+
+    MoodDetectBody:
+      type: object
+      properties:
+        text:
+          type: string
+      required: [text]
+
+    MoodDetectResult:
+      type: object
+      properties:
+        mood:
+          type: string
+          enum: [motivational, professional, collaborative, creative]
+        confidence:
+          type: number
+      required: [mood, confidence]
+
+    # ─── OpenAI Conversations ──────────────────────────────────────────────────
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+      required: [id, title, createdAt]
+
+    CreateConversationBody:
+      type: object
+      properties:
+        title:
+          type: string
+      required: [title]
+
+    ConversationsList:
+      type: object
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Conversation"
+      required: [conversations]
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        createdAt:
+          type: string
+      required: [id, conversationId, role, content, createdAt]
+
+    MessagesList:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+      required: [messages]
+
+    SendOpenaiMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required: [content]
+
+    # ─── Direct Messages ───────────────────────────────────────────────────────
+    DirectMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        senderId:
+          type: string
+        recipientId:
+          type: string
+        content:
+          type: string
+        expiresAt:
+          type: string
+          nullable: true
+        readAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        expired:
+          type: boolean
+          description: True when the message's self-destruct TTL has elapsed. The
+            server scrubs `content` to an empty string in that case; the client
+            should render a "self-destructed" placeholder until the cleanup
+            sweep deletes the row entirely.
+      required: [id, conversationId, senderId, recipientId, content, createdAt]
+
+    DirectMessagesPage:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/DirectMessage"
+        peer:
+          $ref: "#/components/schemas/UserProfile"
+      required: [messages, peer]
+
+    DirectConversationSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        peer:
+          $ref: "#/components/schemas/UserProfile"
+        lastMessage:
+          nullable: true
+          $ref: "#/components/schemas/DirectMessage"
+        unreadCount:
+          type: integer
+        lastMessageAt:
+          type: string
+      required: [id, peer, unreadCount, lastMessageAt]
+
+    DirectConversationsList:
+      type: object
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: "#/components/schemas/DirectConversationSummary"
+      required: [conversations]
+
+    TypingIndicatorBody:
+      type: object
+      properties:
+        recipientId:
+          type: string
+      required: [recipientId]
+
+    Ok:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
+
+    ReportUserBody:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 1000
+        conversationId:
+          type: integer
+          nullable: true
+
+    UpdateUserReportBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, reviewed, dismissed, actioned]
+      required: [status]
+
+    UserReport:
+      type: object
+      properties:
+        id:
+          type: integer
+        reporter:
+          $ref: "#/components/schemas/UserProfile"
+        reported:
+          $ref: "#/components/schemas/UserProfile"
+        conversationId:
+          type: integer
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, reviewed, dismissed, actioned]
+        reviewedAt:
+          type: string
+          nullable: true
+        reviewedById:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, reporter, reported, conversationId, reason, status, createdAt]
+
+    UserReportsList:
+      type: object
+      properties:
+        reports:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserReport"
+      required: [reports]
+
+    UserReportConversation:
+      type: object
+      properties:
+        conversationId:
+          type: integer
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/DirectMessage"
+      required: [conversationId, messages]
+
+    BlockedUserIdsList:
+      type: object
+      properties:
+        blockedUserIds:
+          type: array
+          items:
+            type: string
+      required: [blockedUserIds]
+
+    SendDirectMessageBody:
+      type: object
+      properties:
+        recipientId:
+          type: string
+        content:
+          type: string
+        ttlSeconds:
+          type: integer
+          description: If provided, the message self-destructs after this many seconds.
+          minimum: 1
+      required: [recipientId, content]
+
+    # ─── Power Score ───────────────────────────────────────────────────────────
+    PowerScoreResult:
+      type: object
+      properties:
+        score:
+          type: integer
+        rank:
+          type: string
+        breakdown:
+          type: object
+          properties:
+            network:
+              type: integer
+            content:
+              type: integer
+            activity:
+              type: integer
+            reputation:
+              type: integer
+          required: [network, content, activity, reputation]
+      required: [score, rank, breakdown]
+
+    # ─── Ghost Mode ────────────────────────────────────────────────────────────
+    GhostModeBody:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+      required: [enabled]
+
+    GhostModeResult:
+      type: object
+      properties:
+        ghostMode:
+          type: boolean
+      required: [ghostMode]
+
+    UserViewsResult:
+      type: object
+      properties:
+        identifiedViews:
+          type: integer
+        ghostViews:
+          type: integer
+      required: [identifiedViews, ghostViews]
+
+    # ─── Bounties ──────────────────────────────────────────────────────────────
+    Bounty:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        reward:
+          type: string
+        deadline:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [open, claimed, closed]
+        poster:
+          $ref: "#/components/schemas/UserProfile"
+        submissionsCount:
+          type: integer
+        createdAt:
+          type: string
+      required: [id, title, description, category, reward, status, poster, submissionsCount, createdAt]
+
+    BountiesList:
+      type: object
+      properties:
+        bounties:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bounty"
+        total:
+          type: integer
+      required: [bounties, total]
+
+    CreateBountyBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        reward:
+          type: string
+        deadline:
+          type: string
+      required: [title, description, category, reward]
+
+    BountySubmission:
+      type: object
+      properties:
+        id:
+          type: integer
+        bountyId:
+          type: integer
+        content:
+          type: string
+        link:
+          type: string
+          nullable: true
+        isWinner:
+          type: boolean
+        submitter:
+          $ref: "#/components/schemas/UserProfile"
+        createdAt:
+          type: string
+      required: [id, bountyId, content, isWinner, submitter, createdAt]
+
+    BountySubmissionsList:
+      type: object
+      properties:
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/BountySubmission"
+      required: [submissions]
+
+    UpdateBountyBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        reward:
+          type: string
+        deadline:
+          type: string
+          nullable: true
+
+    CreateBountySubmissionBody:
+      type: object
+      properties:
+        content:
+          type: string
+        link:
+          type: string
+      required: [content]
+
+    # ─── Inner Circles ─────────────────────────────────────────────────────────
+    Circle:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        tagline:
+          type: string
+        description:
+          type: string
+          nullable: true
+        coverImageUrl:
+          type: string
+          nullable: true
+        minPowerScore:
+          type: integer
+        isInviteOnly:
+          type: boolean
+        membersCount:
+          type: integer
+        isMember:
+          type: boolean
+        isPending:
+          type: boolean
+        creator:
+          $ref: "#/components/schemas/UserProfile"
+        createdAt:
+          type: string
+      required: [id, name, tagline, minPowerScore, isInviteOnly, membersCount, isMember, isPending, creator, createdAt]
+
+    CirclesList:
+      type: object
+      properties:
+        circles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Circle"
+        total:
+          type: integer
+      required: [circles, total]
+
+    CreateCircleBody:
+      type: object
+      properties:
+        name:
+          type: string
+        tagline:
+          type: string
+        description:
+          type: string
+        coverImageUrl:
+          type: string
+        minPowerScore:
+          type: integer
+        isInviteOnly:
+          type: boolean
+      required: [name, tagline]
+
+    UpdateCircleBody:
+      type: object
+      properties:
+        name:
+          type: string
+        tagline:
+          type: string
+        description:
+          type: string
+        coverImageUrl:
+          type: string
+
+    CirclePost:
+      type: object
+      properties:
+        id:
+          type: integer
+        circleId:
+          type: integer
+        content:
+          type: string
+        author:
+          $ref: "#/components/schemas/UserProfile"
+        createdAt:
+          type: string
+      required: [id, circleId, content, author, createdAt]
+
+    CirclePostsList:
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CirclePost"
+      required: [posts]
+
+    CreateCirclePostBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required: [content]
+
+    CircleMember:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        username:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        role:
+          type: string
+        powerScore:
+          type: ["integer", "null"]
+        powerRank:
+          type: ["string", "null"]
+      required: [id, role]
+
+    CircleMembersList:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/CircleMember"
+      required: [members]
+
+    CirclePendingList:
+      type: object
+      properties:
+        pending:
+          type: array
+          items:
+            $ref: "#/components/schemas/CircleMember"
+      required: [pending]
+
+    ApproveResult:
+      type: object
+      properties:
+        approved:
+          type: boolean
+        rejected:
+          type: boolean
+      required: []
+
+    # ─── Dark Horse Leaderboard ────────────────────────────────────────────────
+    DarkHorse:
+      type: object
+      properties:
+        rank:
+          type: integer
+        user:
+          $ref: "#/components/schemas/UserProfile"
+        powerScore:
+          type: integer
+        growthPercent:
+          type: number
+        insight:
+          type: string
+      required: [rank, user, powerScore, growthPercent, insight]
+
+    DarkHorsesList:
+      type: object
+      properties:
+        horses:
+          type: array
+          items:
+            $ref: "#/components/schemas/DarkHorse"
+        updatedAt:
+          type: string
+      required: [horses, updatedAt]
+
+    # ─── Storage ────────────────────────────────────────────────────────────────
+    RequestUploadUrlBody:
+      type: object
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+        contentType:
+          type: string
+      required: [name, size, contentType]
+
+    RequestUploadUrlResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            size:
+              type: integer
+            contentType:
+              type: string
+          required: [name, size, contentType]
+      required: [uploadURL, objectPath, metadata]

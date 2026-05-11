@@ -1,0 +1,24 @@
+appId: com.iftid.mobile
+name: Sign in with the demo account
+---
+# Re-uses the running app — assumes capture-store-screenshots.sh launched it.
+# Skips silently when the app is already past the auth gate.
+- runFlow:
+    when:
+      visible: "Welcome back"
+    commands:
+      - tapOn:
+          id: "email"
+          optional: true
+      - tapOn:
+          below: "Email"
+      - inputText: ${MAESTRO_DEMO_EMAIL}
+      - hideKeyboard
+      - tapOn:
+          below: "Password"
+      - inputText: ${MAESTRO_DEMO_PASSWORD}
+      - hideKeyboard
+      - tapOn: "Sign In"
+      - extendedWaitUntil:
+          visible: "For You"
+          timeout: 30000

@@ -1,0 +1,28 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "IFT-iD Mobile"
+version = "1.0.0"
+id = "artifacts/ift-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/mobile/" ]
+localPort = 24286
+
+[services.development]
+run = "pnpm --filter @workspace/ift-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ift-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/ift-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "24286"
+BASE_PATH = "/mobile/"
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_ZGVsaWNhdGUtc3RpbmdyYXktMjAuY2xlcmsuYWNjb3VudHMuZGV2JA"

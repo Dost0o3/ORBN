@@ -1,0 +1,12 @@
+appId: com.iftid.mobile
+name: 06 — Bounties
+---
+- runFlow: 00-sign-in.yaml
+- openLink: ift-mobile://bounties
+- waitForAnimationToEnd:
+    timeout: 5000
+- extendedWaitUntil:
+    visible:
+      text: "(?i)bounty board"
+    timeout: 10000
+- takeScreenshot: ${OUTPUT_DIR}/06-bounties

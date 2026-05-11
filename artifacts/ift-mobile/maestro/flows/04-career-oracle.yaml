@@ -1,0 +1,12 @@
+appId: com.iftid.mobile
+name: 04 — Career Oracle
+---
+- runFlow: 00-sign-in.yaml
+- openLink: ift-mobile://career-oracle
+- waitForAnimationToEnd:
+    timeout: 5000
+- extendedWaitUntil:
+    visible:
+      text: "(?i)career oracle"
+    timeout: 10000
+- takeScreenshot: ${OUTPUT_DIR}/04-career-oracle

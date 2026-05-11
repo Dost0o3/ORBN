@@ -1,0 +1,11 @@
+appId: com.iftid.mobile
+name: ORBN App Store screenshot suite
+---
+- runFlow: flows/01-feed.yaml
+- runFlow: flows/02-explore.yaml
+- runFlow: flows/03-soul-twin.yaml
+- runFlow: flows/04-career-oracle.yaml
+- runFlow: flows/05-profile.yaml
+- runFlow: flows/06-bounties.yaml
+- runFlow: flows/07-leaderboard.yaml
+- runFlow: flows/08-dm-ttl.yaml

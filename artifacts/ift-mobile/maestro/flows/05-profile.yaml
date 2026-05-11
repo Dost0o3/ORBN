@@ -1,0 +1,8 @@
+appId: com.iftid.mobile
+name: 05 — Profile (PowerScoreDial)
+---
+- runFlow: 00-sign-in.yaml
+- tapOn: "Profile"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: ${OUTPUT_DIR}/05-profile

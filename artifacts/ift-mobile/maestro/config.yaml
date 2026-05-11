@@ -1,0 +1,7 @@
+appId: com.iftid.mobile
+---
+# Force a clean baseline before every flow so captures cannot be polluted
+# by a stale session from a previous run on the same simulator.
+- launchApp:
+    clearState: true
+    stopApp: true

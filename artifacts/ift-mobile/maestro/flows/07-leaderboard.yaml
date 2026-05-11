@@ -1,0 +1,12 @@
+appId: com.iftid.mobile
+name: 07 — Dark Horse Leaderboard
+---
+- runFlow: 00-sign-in.yaml
+- openLink: ift-mobile://leaderboard
+- waitForAnimationToEnd:
+    timeout: 5000
+- extendedWaitUntil:
+    visible:
+      text: "(?i)horses"
+    timeout: 10000
+- takeScreenshot: ${OUTPUT_DIR}/07-leaderboard

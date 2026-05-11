@@ -1,0 +1,46 @@
+import { Router, type IRouter } from "express";
+import healthRouter from "./health";
+import usersRouter from "./users";
+import postsRouter from "./posts";
+import jobsRouter from "./jobs";
+import communitiesRouter from "./communities";
+import notificationsRouter from "./notifications";
+import aiRouter from "./ai";
+import openaiConversationsRouter from "./openai-conversations";
+import bountiesRouter from "./bounties";
+import circlesRouter from "./circles";
+import leaderboardRouter from "./leaderboard";
+import matchRouter from "./match";
+import billingRouter from "./billing";
+import storageRouter from "./storage";
+import agentRouter from "./agent";
+import messagesRouter from "./messages";
+import moderationRouter from "./moderation";
+import adminCleanupRunsRouter from "./admin-cleanup-runs";
+import chatScreenshotsRouter from "./chat-screenshots";
+import mobileOAuthRouter from "./mobile-oauth";
+
+const router: IRouter = Router();
+
+router.use(storageRouter);
+router.use(healthRouter);
+router.use(usersRouter);
+router.use(postsRouter);
+router.use(jobsRouter);
+router.use(communitiesRouter);
+router.use(notificationsRouter);
+router.use(aiRouter);
+router.use(openaiConversationsRouter);
+router.use(bountiesRouter);
+router.use(circlesRouter);
+router.use(leaderboardRouter);
+router.use(matchRouter);
+router.use(billingRouter);
+router.use(agentRouter);
+router.use(messagesRouter);
+router.use(moderationRouter);
+router.use(adminCleanupRunsRouter);
+router.use(chatScreenshotsRouter);
+router.use(mobileOAuthRouter);
+
+export default router;

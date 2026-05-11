@@ -1,0 +1,82 @@
+appId: com.iftid.mobile
+name: 09 — Reset Session rescue button
+---
+- runFlow: 00-sign-in.yaml
+
+# Open Settings via the Profile tab's gear icon.
+- tapOn: "Profile"
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: "profile-settings-gear"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Reset Session"
+    commands:
+      - tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Reset Session"
+    timeout: 10000
+
+# Seed an observable AsyncStorage preference (@orbn:dm_read_receipts).
+# Default is ON; toggling it OFF persists "0" under that key. After
+# the rescue, the toggle MUST be back to its default ON state — that
+# proves AsyncStorage.clear() truly wiped the cached preference.
+- tapOn: "Privacy & Security"
+- extendedWaitUntil:
+    id: "privacy-toggle-dm-read-receipts"
+    timeout: 10000
+- assertVisible:
+    id: "privacy-toggle-dm-read-receipts"
+- tapOn:
+    id: "privacy-toggle-dm-read-receipts"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible:
+    id: "privacy-toggle-dm-read-receipts"
+    checked: false
+- back
+
+# Trigger the rescue and accept the destructive alert.
+- extendedWaitUntil:
+    id: "settings-reset-session"
+    timeout: 5000
+- tapOn:
+    id: "settings-reset-session"
+- extendedWaitUntil:
+    visible: "Reset Session?"
+    timeout: 5000
+# Native Alert button label is "Reset" (web build uses window.confirm
+# which Maestro cannot exercise — this flow targets iOS/Android).
+- tapOn: "Reset"
+
+# Lands on sign-in.
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 20000
+- assertVisible: "Welcome back"
+- assertNotVisible: "Reset Session"
+
+# Sign in again and verify the seeded preference is gone — the toggle
+# must be back to its default ON state, proving AsyncStorage.clear()
+# wiped @orbn:dm_read_receipts.
+- runFlow: 00-sign-in.yaml
+- tapOn: "Profile"
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: "profile-settings-gear"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Reset Session"
+    commands:
+      - tapOn: "Settings"
+- tapOn: "Privacy & Security"
+- extendedWaitUntil:
+    id: "privacy-toggle-dm-read-receipts"
+    timeout: 10000
+- assertVisible:
+    id: "privacy-toggle-dm-read-receipts"
+    checked: true
